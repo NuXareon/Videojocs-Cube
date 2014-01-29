@@ -1,0 +1,62 @@
+<html>
+<head>
+	<script src="requestAnimFrame.js"></script>
+	<script src="Keyboard.js"></script>
+	<script src="socket.io.min.js"></script>
+</head>
+<body>
+	<canvas id="myCanvas"></canvas>
+	<script>
+
+		var cubes = {};
+
+		var socket = io.connect('http://localhost:4242');
+
+		var canvas = document.getElementById("myCanvas");
+		var context = canvas.getContext('2d');
+
+		canvas.height = canvas.width = 600;
+
+		function Cube (id) {
+
+		}
+		Cube.prototype.updateWithCubeData = function(data) {
+			if (data === undefined) return;
+			if (data.x !== undefined) this.x = data.x;
+			if (data.y !== undefined) this.y = data.y;
+			if (data.edge !== undefined) this.edge = data.edge;
+		}
+		Cube.prototype.logic = function () {
+			if (this.id === socket.socket.id){
+				//****//
+			}
+		}
+		Cube.prototype.render = function (ctx) {
+			ctx.fillStyle = "blue";
+			ctx.fillRect(this.x, this.y, this.edge, this.edge);
+		}
+
+		socket.on('cubeUpdate', function (cubeData) {
+			var cube = cubes[cubeData.id];
+			if (cube === undefined) {
+				cube = new Cube();
+				cubes[cubeData.id] = cube;
+			}
+
+			cubes[cubeData.id].updateWithCubeData(cubeData);
+		});
+
+		function render() {
+			for (playerId in cubes) {
+				cubes[playerId].render(context);
+			};
+		}
+
+		function mainLoop(){
+			requestAnimFrame(mainLoop);
+			render();
+		}
+		requestAnimFrame(mainLoop);
+
+	</script>
+</body>
