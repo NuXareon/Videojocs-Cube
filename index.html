@@ -1,5 +1,10 @@
 <html>
 <head>
+	<style>
+		body {
+			margin: 0px;
+		}
+	</style>
 	<script src="requestAnimFrame.js"></script>
 	<script src="Keyboard.js"></script>
 	<script src="socket.io.min.js"></script>
@@ -15,6 +20,8 @@
 		var canvas = document.getElementById("myCanvas");
 		var context = canvas.getContext('2d');
 
+		var keyboard = new KeyboardJS(false);
+
 		canvas.height = canvas.width = 600;
 
 		function Cube (id) {
@@ -22,17 +29,36 @@
 		}
 		Cube.prototype.updateWithCubeData = function(data) {
 			if (data === undefined) return;
+			if (data.id !== undefined) this.id = data.id;
 			if (data.x !== undefined) this.x = data.x;
 			if (data.y !== undefined) this.y = data.y;
 			if (data.edge !== undefined) this.edge = data.edge;
+			if (data.color !== undefined) this.color = data.color;
 		}
+		Cube.prototype.speed = 5;
 		Cube.prototype.logic = function () {
-			if (this.id === socket.socket.id){
-				//****//
+
+			if (this.id === socket.socket.sessionid) {
+
+				var oldX = this.x;
+				var oldY = this.y;
+
+				//LOGICA de teclado
+				if (keyboard.char('D')) this.x += this.speed;
+				else if (keyboard.char('A')) this.x -= this.speed;
+
+				if (keyboard.char('W')) this.y -= this.speed;
+				else if (keyboard.char('S')) this.y += this.speed;
+
+				if (oldX !== this.x || oldY !== this.y) {
+					socket.emit('cubeUpdate', this);
+				}
+
 			}
-		}
+
+		}	
 		Cube.prototype.render = function (ctx) {
-			ctx.fillStyle = "blue";
+			ctx.fillStyle = this.color;
 			ctx.fillRect(this.x, this.y, this.edge, this.edge);
 		}
 
@@ -46,14 +72,24 @@
 			cubes[cubeData.id].updateWithCubeData(cubeData);
 		});
 
+		socket.on('cubeDisconnect', function (id) {
+			delete cubes[id];
+		});
+
 		function render() {
+			context.clearRect(0,0,canvas.width,canvas.height);
 			for (playerId in cubes) {
 				cubes[playerId].render(context);
 			};
 		}
 
+		function logic() {
+			for (playerId in cubes) cubes[playerId].logic();
+		}
+
 		function mainLoop(){
 			requestAnimFrame(mainLoop);
+			logic();
 			render();
 		}
 		requestAnimFrame(mainLoop);

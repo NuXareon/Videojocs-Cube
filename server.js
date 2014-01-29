@@ -22,6 +22,7 @@ io.sockets.on('connection', function(socket) {
 	});
 
 	socket.on('disconnect', function (){
-
+		delete cubes[socket.id];
+		io.sockets.emit('cubeDisconnect', socket.id);
 	});
 });
